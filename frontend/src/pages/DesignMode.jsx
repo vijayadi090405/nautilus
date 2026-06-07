@@ -4,7 +4,6 @@ import axios from "axios";
 
 import TorpedoScene from "../components/TorpedoScene";
 import MetricsPanel from "../components/MetricsPanel";
-import TrajectoryGraph from "../components/TrajectoryGraph";
 import SonarPanel from "../components/SonarPanel";
 
 export default function DesignMode() {
@@ -12,52 +11,79 @@ export default function DesignMode() {
   const navigate = useNavigate();
   const [diameter, setDiameter] = useState(0.5);
   const [length, setLength] = useState(4);
-  const [weight, setWeight] = useState(1200);
+  
   const [speed, setSpeed] = useState(40);
-  const [angle, setAngle] = useState(45);
+
   const [propulsion, setPropulsion] =
     useState("Electric");
+  const [coating, setCoating] =
+  useState("None");
+
+const [material, setMaterial] =
+  useState("Steel");
 
   const [metrics, setMetrics] =
     useState(null);
 
   useEffect(() => {
 
-    const fetchData = async () => {
+  console.log(
+    "SIMULATION TRIGGERED"
+  );
 
-      try {
+  const runSimulation = async () => {
 
-        const response =
-          await axios.post(
-            "http://127.0.0.1:5000/simulate",
-            {
-              diameter,
-              length,
-              weight,
-              speed,
-              propulsion,
-            }
-          );
+    try {
 
-        setMetrics(response.data);
+      console.log(
+        "SENDING REQUEST"
+      );
 
-      } catch (err) {
+      const response =
+        await axios.post(
+          "http://127.0.0.1:5000/simulate",
+          {
+            diameter,
+            length,
+            speed,
+            propulsion,
+            material,
+            coating
+          }
+        );
 
-        console.error(err);
+      console.log(
+        "RESPONSE RECEIVED",
+        response.data
+      );
 
-      }
+      setMetrics(
+        response.data
+      );
 
-    };
+    }
 
-    fetchData();
+    catch (err) {
 
-  }, [
-    diameter,
-    length,
-    weight,
-    speed,
-    propulsion,
-  ]);
+      console.error(
+        "SIMULATION FAILED",
+        err
+      );
+
+    }
+
+  };
+
+  runSimulation();
+
+}, [
+  diameter,
+  length,
+  speed,
+  propulsion,
+  material,
+  coating
+]);
 
   return (
     <div className=" relative z-10 min-h-screen bg-slate-950 text-white">
@@ -85,6 +111,8 @@ export default function DesignMode() {
           <h1 className="text-3xl font-bold mb-8">
             Design & Simulate
           </h1>
+
+          <div className="parameter-scroll overflow-y-auto max-h-[70vh] pr-2">
 
           <div className="mb-6">
 
@@ -132,28 +160,6 @@ export default function DesignMode() {
 
           <div className="mb-6">
 
-            <label>Weight</label>
-
-            <input
-              type="range"
-              min="500"
-              max="5000"
-              step="100"
-              value={weight}
-              onChange={(e) =>
-                setWeight(
-                  Number(e.target.value)
-                )
-              }
-              className="w-full"
-            />
-
-            <p>{weight} kg</p>
-
-          </div>
-
-          <div className="mb-6">
-
             <label>Speed</label>
 
             <input
@@ -171,28 +177,6 @@ export default function DesignMode() {
             />
 
             <p>{speed} knots</p>
-
-          </div>
-
-          <div className="mb-6">
-
-            <label>Launch Angle</label>
-
-            <input
-              type="range"
-              min="0"
-              max="90"
-              step="1"
-              value={angle}
-              onChange={(e)=>
-                setAngle(
-                  Number(e.target.value)
-                )
-              }
-              className="w-full"
-            />
-
-            <p>{angle}°</p>
 
           </div>
 
@@ -224,7 +208,49 @@ export default function DesignMode() {
             </select>
 
           </div>
+          <div className="mb-6">
 
+<label>Hull Material</label>
+
+<select
+  value={material}
+  onChange={(e)=>
+    setMaterial(e.target.value)
+  }
+  className="w-full p-2 bg-slate-800 rounded"
+>
+
+<option>Steel</option>
+
+<option>Titanium</option>
+
+<option>Composite</option>
+
+</select>
+
+</div>
+<div className="mb-6">
+
+<label>Anechoic Coating</label>
+
+<select
+  value={coating}
+  onChange={(e)=>
+    setCoating(e.target.value)
+  }
+  className="w-full p-2 bg-slate-800 rounded"
+>
+
+<option>None</option>
+
+<option>Basic</option>
+
+<option>Anechoic</option>
+
+</select>
+
+</div>
+</div>
         </div>
   </div>
 
@@ -286,10 +312,14 @@ export default function DesignMode() {
 
 </div>
   <TorpedoScene
-            diameter={diameter}
-            length={length}
-            propulsion={propulsion}
-          />
+  diameter={diameter}
+  length={length}
+  propulsion={propulsion}
+  material={material}
+  acousticSignature={
+    metrics?.acousticSignature
+  }
+/>
           </div>
           
 <div className="mt-4 grid grid-cols-2 gap-4">
@@ -303,7 +333,9 @@ export default function DesignMode() {
     <div className="text-sm space-y-1">
       <div>Diameter: {diameter} m</div>
       <div>Length: {length} m</div>
-      <div>Weight: {weight} kg</div>
+      <div>
+Material: {material}
+</div>
       <div>Propulsion: {propulsion}</div>
     </div>
 
@@ -319,25 +351,26 @@ export default function DesignMode() {
 
       <div className="space-y-1 text-sm">
         <div>
-          Stealth Index:
-          {Math.round(
-            100 - metrics.detectionRisk
-          )}
-        </div>
+  Detection:
+  {" "}
+  {Math.round(
+    metrics.detection
+  )}%
+</div>
 
-        <div>
-          Acoustic Risk:
-          {Math.round(
-            metrics.acousticRisk
-          )}
-        </div>
+<div>
+  Acoustic:
+  {" "}
+  {metrics.acousticSignature}
+</div>
 
-        <div>
-          Mission Score:
-          {Math.round(
-            metrics.missionScore
-          )}
-        </div>
+<div>
+  Cavitation:
+  {" "}
+  {metrics.cavitationRisk}
+</div>
+
+        
       </div>
 
     </div>
@@ -356,26 +389,59 @@ export default function DesignMode() {
   Performance Dashboard
 </h2>
 
-  <MetricsPanel
-    metrics={metrics}
-  />
+<MetricsPanel
+  metrics={metrics}
+/>
 
-  <div className="mt-8">
-
-    <TrajectoryGraph
-      speed={speed}
-      angle={angle}
-    />
 <div className="mt-6">
 
-  <SonarPanel
-    speed={speed}
-    diameter={diameter}
-    propulsion={propulsion}
-  />
+  <div className="glass-card p-5">
+
+    <div
+      className="
+      text-xs
+      uppercase
+      tracking-widest
+      text-cyan-300
+      mb-4
+    "
+    >
+      Mission Summary
+    </div>
+
+    <div className="space-y-3">
+
+      <div>
+        Estimated Range:
+        {" "}
+        {metrics?.estimatedRange}
+        km
+      </div>
+
+      <div>
+        Transit Time:
+        {" "}
+        {metrics?.transitTime}
+        min
+      </div>
+
+      <div>
+        Material:
+        {" "}
+        {metrics?.material}
+      </div>
+
+      <div>
+        Propulsion:
+        {" "}
+        {metrics?.propulsion}
+      </div>
+
+    </div>
+
+  </div>
 
 </div>
-  </div>
 
 
 </div>

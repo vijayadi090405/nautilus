@@ -1,0 +1,6 @@
+mission,range,stealth,depth,diameter,length,speed,mass
+Anti-Submarine,40,2,1,0.53,5.8,45,1450
+Anti-Submarine,60,2,1,0.54,6.1,48,1550
+Mine Warfare,25,1,0,0.45,4.2,35,900
+Coastal Defense,30,1,0,0.47,4.6,38,1050
+Heavy Strike,120,0,1,0.75,8.0,55,3200

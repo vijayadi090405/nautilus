@@ -7,7 +7,8 @@ import SonarPanel from "../components/SonarPanel";
 
 
 export default function AdvisorMode() {
-
+const [loading, setLoading] =
+  useState(false);
   const navigate = useNavigate();
 const [selectedDesign,
   setSelectedDesign] =
@@ -36,15 +37,22 @@ const getTradeoff = () => {
 
   if (
     !selectedDesign ||
-    !recommendation
-  )
-    return null;
+    !recommendation ||
+    selectedDesign === recommendation
+  ) {
+    return {
+      pros: [
+        "Reference design selected"
+      ],
+      cons: []
+    };
+  }
 
   const pros = [];
   const cons = [];
 
   if (
-    selectedDesign.speed >=
+    selectedDesign.speed >
     recommendation.speed
   ) {
     pros.push(
@@ -52,33 +60,46 @@ const getTradeoff = () => {
     );
   } else {
     cons.push(
-      "Lower speed than recommended design"
+      "Lower speed capability"
     );
   }
 
   if (
-    selectedDesign.diameter <=
-    recommendation.diameter
+    selectedDesign.detection <
+    recommendation.detection
   ) {
     pros.push(
-      "Smaller acoustic profile"
+      "Lower detection probability"
     );
   } else {
     cons.push(
-      "Larger acoustic profile"
+      "Higher detection probability"
     );
   }
 
   if (
-    selectedDesign.length >=
-    recommendation.length
+    selectedDesign.survivability >
+    recommendation.survivability
   ) {
     pros.push(
-      "Improved stability"
+      "Higher survivability"
     );
   } else {
     cons.push(
-      "Reduced stability"
+      "Lower survivability"
+    );
+  }
+
+  if (
+    selectedDesign.estimatedRange >
+    recommendation.estimatedRange
+  ) {
+    pros.push(
+      "Greater operational range"
+    );
+  } else {
+    cons.push(
+      "Reduced operational range"
     );
   }
 
@@ -87,13 +108,22 @@ const getTradeoff = () => {
     cons
   };
 };
+
 const tradeoff =
   getTradeoff();
   const generateRecommendation =
     async () => {
+      console.log("GENERATE CLICKED");
+
+console.log({
+  missionType,
+  range,
+  stealth,
+  depth
+});
 
       try {
-
+setLoading(true);
         const response =
           await axios.post(
             "http://127.0.0.1:5000/advisor",
@@ -108,16 +138,21 @@ const tradeoff =
 setRecommendation(
   response.data
 );
-
+console.log(
+  response.data.missionSimulation
+);
 setSelectedDesign(
   response.data
 );
+setLoading(false);
 
       } catch (err) {
 
-        console.error(err);
+  console.error(err);
 
-      }
+  setLoading(false);
+
+}
 
     };
 
@@ -126,7 +161,39 @@ setSelectedDesign(
 
     
     <div className="min-h-screen bg-slate-950 text-white">
+{loading && (
+  <div
+    className="
+    fixed
+    inset-0
+    z-50
+    bg-black/80
+    flex
+    flex-col
+    items-center
+    justify-center
+    "
+  >
 
+    <div
+      className="
+      animate-spin
+      rounded-full
+      h-20
+      w-20
+      border-b-4
+      border-cyan-400
+      "
+    />
+
+    <div className="mt-6 text-xl">
+
+Running Analysis...
+
+    </div>
+
+  </div>
+)}
       <div className="ai-glow" />
 
 <div className="hex-grid" />
@@ -373,9 +440,9 @@ setSelectedDesign(
                 </div>
 
                 <div>
-                  Weight:
+                  Mass:
                   {" "}
-                  {selectedDesign.weight} kg
+                  {selectedDesign.mass} kg
                 </div>
 
                 <div>
@@ -389,8 +456,343 @@ setSelectedDesign(
                   {" "}
                   {selectedDesign.propulsion}
                 </div>
+                <div>
 
-              </div>
+  Hull Material:
+
+  {" "}
+
+  {selectedDesign?.material}
+
+</div>
+
+<div>
+
+  Hull Coating:
+
+  {" "}
+
+  {selectedDesign?.coating}
+
+</div>
+
+<div>
+
+  Design Philosophy:
+
+  {" "}
+
+  {selectedDesign?.designType}
+
+</div>
+
+<div>
+  Detection Probability:
+  {" "}
+  {selectedDesign?.detection} %
+</div>
+
+<div>
+  Source Level:
+  {" "}
+  {selectedDesign?.sourceLevel}
+  {" "}dB
+</div>
+
+<div>
+  Drag Force:
+  {" "}
+  {selectedDesign?.drag}
+  {" "}N
+</div>
+
+<div>
+  Safety Factor:
+  {" "}
+  {selectedDesign?.safetyFactor}
+</div>
+
+<div>
+  Survivability:
+  {" "}
+  {selectedDesign?.survivability}
+</div>
+<div
+  className="
+  mt-4
+  p-3
+  rounded-xl
+  bg-cyan-900/30
+  border border-cyan-500/30
+  "
+>
+  Advisor Confidence:
+  {" "}
+  {selectedDesign?.confidence}%
+</div>
+{
+recommendation?.missionSimulation && (
+
+<div
+className="
+mt-4
+bg-slate-900
+rounded-xl
+p-4
+border
+border-cyan-500/30
+"
+>
+
+<h3
+className="
+text-cyan-400
+font-bold
+mb-2
+"
+>
+Mission Simulation
+</h3>
+
+<div>
+Mission Success:
+{" "}
+{
+recommendation
+?.missionSimulation
+?.missionSuccess
+}
+%
+</div>
+
+<div>
+Escape Probability:
+{" "}
+{
+recommendation
+?.missionSimulation
+?.escapeProbability
+}
+%
+</div>
+
+<div>
+Target Detected:
+{" "}
+{
+recommendation
+?.missionSimulation
+?.targetDetected
+? "YES"
+: "NO"
+}
+</div>
+
+<div>
+Attack Success:
+{" "}
+{
+recommendation
+?.missionSimulation
+?.attackSuccess
+? "YES"
+: "NO"
+}
+</div>
+
+<div className="mt-4">
+
+<h4 className="font-bold">
+Mission Timeline
+</h4>
+
+{
+recommendation
+?.missionSimulation
+?.timeline
+?.map(
+(step,index)=>(
+<div
+key={index}
+className="mt-2"
+>
+✓ {step.phase}
+</div>
+)
+)
+}
+
+</div>
+
+</div>
+
+)
+}
+
+{
+recommendation?.riskAnalysis && (
+
+<div
+className="
+mt-4
+bg-slate-900
+rounded-xl
+p-4
+border
+border-yellow-500/30
+"
+>
+
+<h3
+className="
+text-yellow-400
+font-bold
+mb-4
+"
+>
+Monte Carlo Risk Analysis
+</h3>
+
+<div className="grid grid-cols-2 gap-3">
+
+<div className="glass-card p-3">
+<div className="text-xs text-cyan-300">
+Mean Success
+</div>
+<div className="text-xl font-bold">
+{
+recommendation.riskAnalysis
+.meanMissionSuccess
+}%
+</div>
+</div>
+
+<div className="glass-card p-3">
+<div className="text-xs text-cyan-300">
+Success Rate
+</div>
+<div className="text-xl font-bold">
+{
+recommendation.riskAnalysis
+.successRate
+}%
+</div>
+</div>
+
+<div className="glass-card p-3">
+<div className="text-xs text-cyan-300">
+P10
+</div>
+<div className="text-xl font-bold">
+{
+recommendation.riskAnalysis
+.p10MissionSuccess
+}%
+</div>
+</div>
+
+<div className="glass-card p-3">
+<div className="text-xs text-cyan-300">
+P90
+</div>
+<div className="text-xl font-bold">
+{
+recommendation.riskAnalysis
+.p90MissionSuccess
+}%
+</div>
+</div>
+
+<div className="glass-card p-3">
+<div className="text-xs text-cyan-300">
+Std Dev
+</div>
+<div className="text-xl font-bold">
+{
+recommendation.riskAnalysis
+.stdMissionSuccess
+}
+</div>
+</div>
+
+<div className="glass-card p-3">
+<div className="text-xs text-cyan-300">
+Risk Level
+</div>
+
+<div
+className={`
+text-xl
+font-bold
+${
+recommendation.riskAnalysis
+.riskLevel === "LOW"
+? "text-green-400"
+: recommendation.riskAnalysis
+.riskLevel === "MEDIUM"
+? "text-yellow-400"
+: "text-red-400"
+}
+`}
+>
+{
+recommendation.riskAnalysis
+.riskLevel
+}
+</div>
+
+</div>
+
+</div>
+
+</div>
+
+)
+}
+
+<div className="mt-6">
+
+  <h3 className="text-xl font-bold">
+    Why This Design Was Chosen
+  </h3>
+
+  <div className="glass-card p-4 mt-3">
+
+    {
+(selectedDesign?.reasoning || []).map(
+        (item, index) => (
+          <div key={index}>
+            ✓ {item}
+          </div>
+        )
+      )
+    }
+
+  </div>
+
+</div>
+<div className="mt-6">
+
+  <h3 className="text-xl font-bold">
+    AI Tradeoffs
+  </h3>
+
+  <div className="glass-card p-4 mt-3">
+
+    {
+(selectedDesign?.tradeoffs || []).map(
+        (item, index) => (
+          <div key={index}>
+            ⚠ {item}
+          </div>
+        )
+      )
+    }
+
+  </div>
+
+</div>
+</div>
 
 <div className="mt-8">
 
@@ -445,7 +847,35 @@ font-bold
 ">
 Alternative Designs
 </h3>
+<div
+  onClick={() =>
+    setSelectedDesign(
+      recommendation
+    )
+  }
+  className="
+  mt-3
+  cursor-pointer
+  rounded-xl
+  bg-green-900/30
+  border border-green-500/30
+  p-3
+  "
+>
 
+  <div className="flex justify-between">
+
+    <span>
+      ⭐ Recommended
+    </span>
+
+    <span className="text-green-400">
+      {recommendation.score}
+    </span>
+
+  </div>
+
+</div>
 <div className="mt-4">
 
 {
@@ -453,9 +883,13 @@ recommendation.alternatives?.map(
 (design,index)=>(
 <div
 key={index}
-onClick={()=>
-setSelectedDesign(design)
-}
+onClick={() => {
+
+  console.log(design);
+
+  setSelectedDesign(design);
+
+}}
 className="
 mt-3
 cursor-pointer
@@ -468,7 +902,7 @@ p-3
 <div className="flex justify-between">
 
   <span>
-    Option {index + 1}
+    Alternative {index + 1}
   </span>
 
   <span className="text-cyan-400">
@@ -483,120 +917,40 @@ p-3
 
 </div>
 
-<div
-  onClick={() =>
-    setSelectedDesign(
-      recommendation.bestStealth
-    )
+
+</div>
+
+<div className="mt-8">
+
+<SonarPanel
+  sourceLevel={
+    selectedDesign?.sourceLevel || 0
   }
-  className="
-  mt-3
-  cursor-pointer
-  rounded-xl
-  bg-slate-900
-  p-3
-  "
->
 
-  <div className="flex justify-between">
-
-    <span>
-      Best Stealth
-    </span>
-
-    <span className="text-cyan-400">
-      {
-        recommendation
-          .bestStealth
-          ?.score
-      }
-    </span>
-
-  </div>
-
-</div>
-
-<div
-  onClick={() =>
-    setSelectedDesign(
-      recommendation.bestSpeed
-    )
+  detection={
+    selectedDesign?.detection || 0
   }
-  className="
-  mt-3
-  cursor-pointer
-  rounded-xl
-  bg-slate-900
-  p-3
-  "
->
 
-  <div className="flex justify-between">
-
-    <span>
-      Best Speed
-    </span>
-
-    <span className="text-cyan-400">
-      {
-        recommendation
-          .bestSpeed
-          ?.score
-      }
-    </span>
-
-  </div>
-
-</div>
-
-<div
-  onClick={() =>
-    setSelectedDesign(
-      recommendation.bestRange
-    )
+  propulsion={
+    selectedDesign?.propulsion
   }
-  className="
-  mt-3
-  cursor-pointer
-  rounded-xl
-  bg-slate-900
-  p-3
-  "
->
 
-  <div className="flex justify-between">
+  coating={
+    selectedDesign?.coating
+  }
 
-    <span>
-      Best Range
-    </span>
+  acousticSignature={
+    selectedDesign?.acousticSignature
+  }
 
-    <span className="text-cyan-400">
-      {
-        recommendation
-          .bestRange
-          ?.score
-      }
-    </span>
+  magneticSignature={
+    selectedDesign?.magneticSignature
+  }
 
-  </div>
-
-</div>
-
-</div>
-
-              <div className="mt-8">
-
-                <SonarPanel
-                  speed={
-                    selectedDesign.speed
-                  }
-                  diameter={
-                    selectedDesign.diameter
-                  }
-                  propulsion={
-                    selectedDesign.propulsion
-                  }
-                />
+  thermalSignature={
+    selectedDesign?.thermalSignature
+  }
+/>
 
               </div>
 

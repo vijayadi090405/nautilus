@@ -5,6 +5,8 @@ export default function TorpedoScene({
   diameter = 0.7,
   length = 6,
   propulsion = "Electric",
+  material = "Steel",
+  acousticSignature = "LOW"
 }) {
 
   const mountRef = useRef(null);
@@ -90,21 +92,36 @@ controls.dampingFactor = 0.05;
 
     scene.add(backLight);
 
-    let glowColor = 0x67e8f9;
-    let bodyColor = 0x7dd3fc;
+    let bodyColor = 0x94a3b8;
 
-    if (propulsion === "Thermal") {
-      glowColor = 0xfb923c;
-      bodyColor = 0xf97316;
-    }
+if(material==="Steel"){
+  bodyColor=0x6b7280;
+}
 
-    if (propulsion === "Pump-Jet") {
-      glowColor = 0xc084fc;
-      bodyColor = 0xa855f7;
-    }
+if(material==="Titanium"){
+  bodyColor=0xcbd5e1;
+}
 
-    const material =
-      new THREE.MeshPhysicalMaterial({
+if(material==="Composite"){
+  bodyColor=0x111827;
+}
+
+let glowColor = 0x67e8f9;
+
+if(propulsion==="Thermal"){
+  glowColor=0xfb923c;
+}
+
+if(propulsion==="Pump-Jet"){
+  glowColor=0xa855f7;
+}
+
+if(propulsion==="Electric"){
+  glowColor=0x22d3ee;
+}
+
+    const bodyMaterial =
+  new THREE.MeshPhysicalMaterial({
         color: bodyColor,
         metalness: 0.85,
         roughness: 0.18,
@@ -128,7 +145,7 @@ controls.dampingFactor = 0.05;
     const body =
       new THREE.Mesh(
         bodyGeometry,
-        material
+bodyMaterial
       );
 
     body.rotation.z =
@@ -146,7 +163,7 @@ controls.dampingFactor = 0.05;
     const nose =
       new THREE.Mesh(
         noseGeometry,
-        material
+        bodyMaterial
       );
 
     nose.rotation.z =
@@ -285,6 +302,62 @@ controls.dampingFactor = 0.05;
 
     torpedoGroup.add(glow);
 
+    let ringColor = 0x22c55e;
+let ringScale = 1.5;
+
+if(acousticSignature==="MEDIUM"){
+
+  ringColor = 0xfacc15;
+  ringScale = 2.2;
+
+}
+
+if(acousticSignature==="HIGH"){
+
+  ringColor = 0xef4444;
+  ringScale = 3.0;
+
+}
+
+const ringGeometry =
+  new THREE.RingGeometry(
+    1.2,
+    1.3,
+    64
+  );
+
+const ringMaterial =
+  new THREE.MeshBasicMaterial({
+
+    color: ringColor,
+
+    transparent: true,
+
+    opacity: 0.4,
+
+    side: THREE.DoubleSide
+
+  });
+
+const sonarRing =
+  new THREE.Mesh(
+    ringGeometry,
+    ringMaterial
+  );
+
+sonarRing.rotation.y =
+  Math.PI / 2;
+
+sonarRing.scale.set(
+  ringScale,
+  ringScale,
+  ringScale
+);
+
+torpedoGroup.add(
+  sonarRing
+);
+
     let frameId;
 
     const animate = () => {
@@ -303,6 +376,23 @@ controls.dampingFactor = 0.05;
         Math.sin(
           Date.now() * 0.005
         ) * 0.2;
+
+        const sonarPulse =
+  1 +
+  Math.sin(
+    Date.now() * 0.003
+  ) * 0.15;
+
+sonarRing.scale.set(
+
+  ringScale * sonarPulse,
+
+  ringScale * sonarPulse,
+
+  ringScale * sonarPulse
+
+);
+
 
       glow.scale.set(
         pulse,
@@ -339,11 +429,13 @@ controls.update();
 
     };
 
-  }, [
-    diameter,
-    length,
-    propulsion
-  ]);
+}, [
+  diameter,
+  length,
+  propulsion,
+  material,
+  acousticSignature
+]);
 
   return (
     <div

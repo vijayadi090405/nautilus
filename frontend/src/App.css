@@ -182,3 +182,15 @@
     border-right-color: var(--border);
   }
 }
+.parameter-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+
+.parameter-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.parameter-scroll::-webkit-scrollbar-thumb {
+  background: rgba(34,211,238,0.25);
+  border-radius: 10px;
+}

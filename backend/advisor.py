@@ -1,3 +1,10 @@
+from optimizer import optimize_design
+from advisor_reasoning import generate_advisor_reasoning
+from mission_simulator import simulate_mission
+from monte_carlo import (
+    monte_carlo_analysis
+)
+
 def recommend_design(
     mission_type,
     range_km,
@@ -5,48 +12,43 @@ def recommend_design(
     depth
 ):
 
-    if stealth == "High":
-
-        propulsion = "Electric"
-        diameter = 0.5
-        speed = 40
-
-    else:
-
-        propulsion = "Thermal"
-        diameter = 0.7
-        speed = 60
-
-    length = 4 + (range_km / 20)
-
-    weight = (
-        length
-        * diameter
-        * 450
+    result = optimize_design(
+        target_range=range_km,
+        stealth_priority=stealth,
+        depth=depth
     )
 
-    if depth == "Deep":
+    best = result["best"]
 
-        weight *= 1.2
+    best["mission"] = mission_type
 
-    return {
+    reasoning = generate_advisor_reasoning(
+        best,
+        mission_type
+    )
 
-        "diameter":
-            round(diameter, 2),
+    best["reasoning"] = reasoning["reasons"]
+    best["tradeoffs"] = reasoning["tradeoffs"]
 
-        "length":
-            round(length, 2),
+    mission_result = simulate_mission(
+        best,
+        mission_type
+    )
 
-        "weight":
-            round(weight, 2),
+    best["missionSimulation"] = (
+        mission_result
+    )
 
-        "speed":
-            round(speed, 2),
+    risk_analysis = (
+        monte_carlo_analysis(
+            best,
+            mission_type,
+            500
+        )
+    )
 
-        "propulsion":
-            propulsion,
+    best["riskAnalysis"] = (
+        risk_analysis
+    )
 
-        "mission":
-            mission_type
-
-    }
+    return best
