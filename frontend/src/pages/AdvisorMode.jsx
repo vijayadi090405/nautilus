@@ -126,7 +126,7 @@ console.log({
 setLoading(true);
         const response =
           await axios.post(
-            "http://127.0.0.1:5000/advisor",
+            "https://nautilus-lsmu.onrender.com/advisor",
             {
               missionType,
               range,
